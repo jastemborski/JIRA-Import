@@ -172,8 +172,8 @@ def parseFile(wb, session=None, filename=None):
         customer = get_customer(customer_sheet)
 
         # Determines if Stories have already been created for each Sub-task
-        stories = get_stories(jira_sheet, customer_sheet)
-        create_stories(stories, session, wb, filename)
+        # stories = get_stories(jira_sheet, customer_sheet)
+        # create_stories(stories, session, wb, filename)
 
         # # Process File
         for row in range(2, maxRow + 1):
@@ -186,7 +186,7 @@ def parseFile(wb, session=None, filename=None):
             issue.parent = get_parent(jira_sheet, issue.process)
             issue.customer = customer
             issue.issue_type = "10102"
-            issue.project_key = "DELIVERCOM"
+            issue.project_key = PROJECT_KEY
             issues.append(issue)
         return issues
     except Exception:
@@ -283,3 +283,18 @@ def write_jira_key(issues, num_issues, filename):
 # def scrub_doc cleans internal info to send dox to client
 
 # def merge_docs merges clients and local
+
+
+def form_query(issue):
+    # issue.change_description  #description
+    # issue.parent
+    # issue.customer
+    # issue.process
+    # issue.platform
+    summary = issue.process + ': ' + issue.change_type
+    query = "project=" + issue.project_key + " and summary~'" \
+            + summary + "' and description~'" + issue.change_description + "'"
+    return query
+
+# def for_queries(issue_list):
+#     for issue in issue_list:

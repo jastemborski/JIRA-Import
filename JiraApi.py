@@ -32,7 +32,7 @@ def create_issue(issue, post=False, session=None):
         custom_fields = ""
         issuetype = STORY
     jIssue = '{"update":{}, "fields":{"project":{"key": "' \
-             + issue.project_key + '", "name": "Delivery 123C"},' + parent + '"summary": "' + summary + '", \
+             + issue.project_key + '"},' + parent + '"summary": "' + summary + '", \
              "description": "' + issue.change_description + ' \
              ","issuetype":{"id":' + issuetype + '}' + custom_fields + '}}'
     # print(jIssue)
@@ -70,12 +70,18 @@ def create_meta(session, project_id=None, project_keys=None,
 
 # def get_issue()
 
-def search_issues(search_query, field_list, start=0, max_results=15, fields_by_key=True):
+
+def search_issues(search_query, field_list=None, start="0", max_results="15",
+                  fields_by_key="true", session=None):
+    fields = ""
     for field in field_list:
-        fields = '"' + field_list '"'
+        fields = '"' + field + '"'
         if field is not field_list[-1]:
             fields = fields + ', '
     query = '{ "jql": "' + search_query + '", "startAt": ' + start + ',' \
-            '"maxResults": ' + maxResults + ', "fields": [' + fields + '], "fieldsByKeys":' 
-            + fieldsByKeys + '}'
-    return json.loads(query)
+            '"maxResults": ' + max_results + ', "fields": [' + fields + \
+            '], "fieldsByKeys":' + fields_by_key + '}'
+    # return query
+    return session.post(constants.URI_SEARCH,
+                        headers=constants.APPLICATION_JSON,
+                        json=(json.loads(query)))
