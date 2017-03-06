@@ -54,7 +54,7 @@ def create_issues(session, Issues):
         # jIssues = temp_issue + ','
     jIssues = '{"issueUpdates":[' + jIssues + ']}'
     # return jIssues
-    print(jIssues)
+    # print(jIssues)
     return session.post(constants.URI_CREATE_ISSUES,
                         headers=constants.APPLICATION_JSON,
                         json=(json.loads(jIssues)))
@@ -85,3 +85,8 @@ def search_issues(search_query, field_list=None, start="0", max_results="15",
     return session.post(constants.URI_SEARCH,
                         headers=constants.APPLICATION_JSON,
                         json=(json.loads(query)))
+
+
+def get_issue(key, session):
+    return session.get((constants.URI_GET_ISSUE + '/' + key),
+                       headers=constants.APPLICATION_JSON)

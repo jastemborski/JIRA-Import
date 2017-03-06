@@ -1,29 +1,35 @@
 import utilities
 import json
-from JiraApi import create_issues, create_meta, search_issues
+from JiraApi import create_issues, create_meta, search_issues, get_issue
 
-# opening workbook & associated sheets
 
-# print(create_issues(issues))
+# filename = "jira-import-template.xlsx"
+# s = utilities.login()
+# wb = utilities.readFile(filename)
+# issues = utilities.parseFile(wb, session=s, filename=filename)
+# issue_response = json.loads(create_issues(s, issues).text)
+# utilities.write_jira_key(issue_response, len(issues), filename)
+# utilities.write_status(issue_response, len(issues), filename, s)
 
-# utilities.run()
 filename = "jira-import-template.xlsx"
 s = utilities.login()
 wb = utilities.readFile(filename)
-issues = utilities.parseFile(wb)
+issues = utilities.parseFile(wb, session=s, filename=filename)
+utilities.update_status(issues, s, filename)
 
-# create_issues(s, issues)
+
 
 # search_query = "project=TEST and summary=Complaint: Modify Field Values"
-field_list = []
-search_query = utilities.form_query(issues[0])
-field_list.append("summary")
-print(search_issues(search_query, field_list=field_list, session=s))
-search = json.loads(search_issues(search_query, field_list=field_list, session=s).text)
-print(search['issues'][0]['key'])
+# field_list = []
+# search_query = utilities.form_query(issues[0])
+# field_list.append("summary, status")
 
-# issue_response = json.loads(create_issues(s, issues).text)
-# utilities.write_jira_key(issue_response, len(issues))
+
+# print(search_issues(search_query, field_list=field_list, session=s))
+# search = json.loads(search_issues(search_query, field_list=field_list, session=s).text)
+# print(search['issues'][0]['key'])
+
+
 # print(issue)
 # print(issue['issues'][0]['key'])
 

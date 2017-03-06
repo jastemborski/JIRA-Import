@@ -13,3 +13,4 @@ URI_SEARCH = '/rest/api/2/search'
 URI_GET_ALL_PROJECTS = '/rest/api/2/project'
 URI_MOVE_ISSUES_TO_SPRINT = '/rest/agile/1.0/sprint/'  # '{sprintId}/issue'
 URI_SEARCH = URL + '/rest/api/2/search'
+URI_GET_ISSUE = URL + '/rest/api/2/issue'  # {issueIdOrKey}  

@@ -1,6 +1,6 @@
 from Issue import Issue
 import openpyxl
-from JiraApi import create_issues, create_issue
+from JiraApi import create_issues, create_issue, get_issue
 import requests
 import constants
 import json
@@ -125,8 +125,8 @@ def create_stories(story_dict, session=None, wb=None, filename=None):
                 _issue.change_description = story.description
                 if story.summary and story.description:
                     issue = create_issue(_issue, True, session)
-                    print(issue)
-                    print(issue.text)
+                    # print(issue)
+                    # print(issue.text)
                     info = json.loads(issue.text)
                     key = info['key']
                     write_story(wb, story.col, key, filename)
@@ -172,8 +172,8 @@ def parseFile(wb, session=None, filename=None):
         customer = get_customer(customer_sheet)
 
         # Determines if Stories have already been created for each Sub-task
-        # stories = get_stories(jira_sheet, customer_sheet)
-        # create_stories(stories, session, wb, filename)
+        stories = get_stories(jira_sheet, customer_sheet)
+        create_stories(stories, session, wb, filename)
 
         # # Process File
         for row in range(2, maxRow + 1):
@@ -187,6 +187,7 @@ def parseFile(wb, session=None, filename=None):
             issue.customer = customer
             issue.issue_type = "10102"
             issue.project_key = PROJECT_KEY
+            issue.jira_key = req_sheet['F' + str(row)].value
             issues.append(issue)
         return issues
     except Exception:
@@ -267,18 +268,56 @@ def write_jira_key(issues, num_issues, filename):
             req_sheet['F' + str(row_seed)] = issueKey
             val = constants.URL_BROWSE + issueKey
             req_sheet['F' + str(row_seed)].hyperlink = Hyperlink(ref="", target=val)
-            req_sheet['F' + str(row_seed)].font = Font(color="006100")
-            req_sheet['F' + str(row_seed)].fill = PatternFill("solid", fgColor="C6EFCE")
-            # test.font = Font(color="#006100")
-            # test.font = Font(color="#006100")
-            # print('\n' + test.font)
-            # req_sheet['F' + str(row_seed)].fill = Fill(fgColor="#C6EFCE")
+            # req_sheet['F' + str(row_seed)].font = Font(color="006100")
+            # req_sheet['F' + str(row_seed)].fill = PatternFill("solid", fgColor="C6EFCE")
             row_seed += 1
         wb.save(filename)
     except Exception:
         print("Please close the file, then try again.")
 
-# def check_issue_completion():
+
+def update_status(issue_list, session, filename):
+    try:
+        row_seed = 2
+        wb = openpyxl.load_workbook('jira-import-template.xlsx')
+        req_sheet = wb.get_sheet_by_name('Requirements')
+        for issue in issue_list:
+            issueStatusJson = get_issue(issue.jira_key, session)
+            issueStatus = json.loads(issueStatusJson.text)
+            issueStatus = issueStatus['fields']['status']['name']
+            req_sheet['G' + str(row_seed)] = issueStatus
+            done = PatternFill("solid", fgColor="C6EFCE")
+            todo = PatternFill("solid", fgColor="FFC7CE")
+            in_progress = PatternFill("solid", fgColor="FFEB9C")
+            if issueStatus == "To Do":
+                req_sheet['A' + str(row_seed)].fill = todo
+                req_sheet['B' + str(row_seed)].fill = todo
+                req_sheet['C' + str(row_seed)].fill = todo
+                req_sheet['D' + str(row_seed)].fill = todo
+                req_sheet['E' + str(row_seed)].fill = todo
+                req_sheet['F' + str(row_seed)].fill = todo
+                req_sheet['G' + str(row_seed)].fill = todo
+            elif issueStatus == "Done":
+                req_sheet['B' + str(row_seed)].fill = done
+                req_sheet['A' + str(row_seed)].fill = done
+                req_sheet['C' + str(row_seed)].fill = done
+                req_sheet['D' + str(row_seed)].fill = done
+                req_sheet['E' + str(row_seed)].fill = done
+                req_sheet['F' + str(row_seed)].fill = done
+                req_sheet['G' + str(row_seed)].fill = done
+            else:
+                req_sheet['A' + str(row_seed)].fill = in_progress
+                req_sheet['B' + str(row_seed)].fill = in_progress
+                req_sheet['C' + str(row_seed)].fill = in_progress
+                req_sheet['D' + str(row_seed)].fill = in_progress
+                req_sheet['E' + str(row_seed)].fill = in_progress
+                req_sheet['F' + str(row_seed)].fill = in_progress
+                req_sheet['G' + str(row_seed)].fill = in_progress
+            row_seed += 1
+        wb.save(filename)
+    except Exception:
+        print("Please close the file, then try again.")
+
 
 # def scrub_doc cleans internal info to send dox to client
 
@@ -295,6 +334,51 @@ def form_query(issue):
     query = "project=" + issue.project_key + " and summary~'" \
             + summary + "' and description~'" + issue.change_description + "'"
     return query
+
+
+def write_status(issues, num_issues, filename, session):
+    try:
+        row_seed = 2
+        wb = openpyxl.load_workbook('jira-import-template.xlsx')
+        req_sheet = wb.get_sheet_by_name('Requirements')
+        for issue_index in range(0, num_issues):
+            issueKey = issues['issues'][issue_index]['key']
+            issueStatusJson = get_issue(issueKey, session)
+            issueStatus = json.loads(issueStatusJson.text)
+            issueStatus = issueStatus['fields']['status']['name']
+            req_sheet['G' + str(row_seed)] = issueStatus
+            done = PatternFill("solid", fgColor="C6EFCE")
+            todo = PatternFill("solid", fgColor="FFC7CE")
+            in_progress = PatternFill("solid", fgColor="FFEB9C")
+            if issueStatus == "To Do":
+                req_sheet['A' + str(row_seed)].fill = todo
+                req_sheet['B' + str(row_seed)].fill = todo
+                req_sheet['C' + str(row_seed)].fill = todo
+                req_sheet['D' + str(row_seed)].fill = todo
+                req_sheet['E' + str(row_seed)].fill = todo
+                req_sheet['F' + str(row_seed)].fill = todo
+                req_sheet['G' + str(row_seed)].fill = todo
+            elif issueStatus == "Done":
+                req_sheet['B' + str(row_seed)].fill = done
+                req_sheet['A' + str(row_seed)].fill = done
+                req_sheet['C' + str(row_seed)].fill = done
+                req_sheet['D' + str(row_seed)].fill = done
+                req_sheet['E' + str(row_seed)].fill = done
+                req_sheet['F' + str(row_seed)].fill = done
+                req_sheet['G' + str(row_seed)].fill = done
+            else:
+                req_sheet['A' + str(row_seed)].fill = in_progress
+                req_sheet['B' + str(row_seed)].fill = in_progress
+                req_sheet['C' + str(row_seed)].fill = in_progress
+                req_sheet['D' + str(row_seed)].fill = in_progress
+                req_sheet['E' + str(row_seed)].fill = in_progress
+                req_sheet['F' + str(row_seed)].fill = in_progress
+                req_sheet['G' + str(row_seed)].fill = in_progress
+            row_seed += 1
+        wb.save(filename)
+    except Exception:
+        print("Please close the file, then try again.")
+
 
 # def for_queries(issue_list):
 #     for issue in issue_list:
