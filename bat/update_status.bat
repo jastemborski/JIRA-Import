@@ -1,1 +1,0 @@
-C:\Python35\python.exe C:\Python35\python.exe C:\Users\Jonathan.Astemborski\Desktop\JIRA-Import\Features\update_status.py

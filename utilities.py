@@ -91,6 +91,39 @@ def get_notes(req_sheet, row_num):
     return (req_sheet['E' + str(row_num)].value)
 
 
+def get_jira_task(req_sheet, row_num):
+    """ Accessor for JIRA Key
+    Args:
+        req_sheet: A variable holding an Excel Workbook sheet in memory.
+        row_num: A variable holding the row # of the data being accessed.
+    Returns:
+            A string value of the Notes
+    """
+    return (req_sheet['F' + str(row_num)].value)
+
+
+def get_status(req_sheet, row_num):
+    """ Accessor for JIRA Key
+    Args:
+        req_sheet: A variable holding an Excel Workbook sheet in memory.
+        row_num: A variable holding the row # of the data being accessed.
+    Returns:
+            A string value of the Notes
+    """
+    return (req_sheet['G' + str(row_num)].value)
+
+
+def get_assign_to(req_sheet, row_num):
+    """ Accessor for Assign To field
+    Args:
+        req_sheet: A variable holding an Excel Workbook sheet in memory.
+        row_num: A variable holding the row # of the data being accessed.
+    Returns:
+            A string value of the Notes
+    """
+    return (req_sheet['H' + str(row_num)].value)
+
+
 def get_customer(customer_sheet):
     """ Accessor for Customer
 
@@ -274,7 +307,7 @@ def parseFile(wb, session=None, filename=None):
             issue.customer = customer
             issue.issue_type = ISSUE_TYPE
             issue.project_key = PROJECT_KEY
-            issue.jira_key = req_sheet['F' + str(row)].value
+            issue.jira_key = get_jira_task(req_sheet, row)
             issue.row = str(row)
             issues.append(issue)
         return issues
