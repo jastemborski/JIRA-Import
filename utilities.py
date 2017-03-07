@@ -31,32 +31,92 @@ COL_DICT = {1: 'A', 2: 'B', 3: 'C', 4: 'D', 5: 'E', 6: 'F', 7: 'G', 8: 'H',
             23: 'W', 24: 'X', 25: 'Y', 26: 'Z'}
 
 
+""" =========================================================================
+|                           Accessor Methods                                |
+=========================================================================="""
+
+
 def get_change_type(req_sheet, row_num):
+    """ Accessor for Change Type
+    Args:
+        req_sheet: A variable holding an Excel Workbook sheet in memory.
+        row_num: A variable holding the row # of the data being accessed.
+    Returns:
+            A string value of the Change Type
+"""
     return (req_sheet['A' + str(row_num)].value)
 
 
 def get_change_description(req_sheet, row_num):
+    """ Accessor for Change Description
+    Args:
+        req_sheet: A variable holding an Excel Workbook sheet in memory.
+        row_num: A variable holding the row # of the data being accessed.
+    Returns:
+            A string value of the Change Description
+    """
     return (req_sheet['B' + str(row_num)].value)
 
 
 def get_platform(req_sheet, row_num):
+    """ Accessor for Platform
+    Args:
+        req_sheet: A variable holding an Excel Workbook sheet in memory.
+        row_num: A variable holding the row # of the data being accessed.
+    Returns:
+            A string value of the Platform
+"""
     return (req_sheet['C' + str(row_num)].value)
 
 
 def get_process(req_sheet, row_num):
+    """ Accessor for Process
+    Args:
+        req_sheet: A variable holding an Excel Workbook sheet in memory.
+        row_num: A variable holding the row # of the data being accessed.
+    Returns:
+            A string value of the Process
+    """
     return (req_sheet['D' + str(row_num)].value)
 
 
 def get_notes(req_sheet, row_num):
+    """ Accessor for Notes
+    Args:
+        req_sheet: A variable holding an Excel Workbook sheet in memory.
+        row_num: A variable holding the row # of the data being accessed.
+    Returns:
+            A string value of the Notes
+    """
     return (req_sheet['E' + str(row_num)].value)
 
 
 def get_customer(customer_sheet):
+    """ Accessor for Customer
+
+    Args:
+        customer_sheet: A variable holding an Excel Workbook sheet in memory.
+    Returns:
+            A string value of the Customer
+    """
     return (customer_sheet['A' + "2"].value)
 
 
 def get_parent(jira_sheet, process):
-    # print(process + '\n')
+    """ Accessor for Parent
+
+    Accessor method for retrieving the value for Parent (JIRA Key) on the
+    JIRA Stories Sheet.
+
+    There is a check to make certain the process in question is amongst those
+    qualified to exist.
+
+    Args:
+        jira_sheet: A variable holding an Excel Workbook sheet in memory.
+        process: A variable holding the process of an Issue.
+    Returns:
+            A string value of the Parent
+"""
     if process in PROCESS_DICT:
         return (jira_sheet[PROCESS_DICT.get(process) + "2"].value)
     else:
@@ -97,6 +157,11 @@ def get_stories(jira_sheet, customer_sheet):
         story_list.append(story)
         # print(story.key)
     return story_list
+
+
+""" =========================================================================
+|                          End Accessor Methods                            |
+=========================================================================="""
 
 
 def create_stories(story_dict, session=None, wb=None, filename=None):
@@ -154,6 +219,12 @@ def write_story(wb, col, key, filename):
 
 
 def readFile(filename=None):
+    """ Reads Excel Workbook into memory
+
+    Args:
+        filename: A variable holding the document's filename
+
+    """
     try:
         if filename is None:
             filename = input("Please enter a filename: ")
@@ -164,6 +235,21 @@ def readFile(filename=None):
 
 
 def parseFile(wb, session=None, filename=None):
+    """ Parses Workbook into Issues Objects
+
+        Iterates through each row containing data within the Workbook
+        while creating an Issue object capturing all of the information.
+
+        A Story ( Parent ) is required in order to create Sub-tasks ( info on Requirements sheet)
+        therefore there is a check prior to processing the file in place in order to create
+        a Story ( Parent ) if they don't already exist.
+
+    Args:
+        wb: A variable holding a Excel Workbook in memory.
+        session: An optional variable holding the current Session.
+        filename: An optional variable holding the filename of the Workbook
+    Return: A list of Issue Objects
+    """
     try:
         req_sheet = wb.get_sheet_by_name('Requirements')
         jira_sheet = wb.get_sheet_by_name('JIRA Stories')
@@ -176,7 +262,7 @@ def parseFile(wb, session=None, filename=None):
         stories = get_stories(jira_sheet, customer_sheet)
         create_stories(stories, session, wb, filename)
 
-        # # Process File
+        #  Process File
         for row in range(2, maxRow + 1):
             issue = Issue()
             issue.change_type = get_change_type(req_sheet, row)
@@ -196,44 +282,28 @@ def parseFile(wb, session=None, filename=None):
         print("Error processing file.")
 
 
-def run():
-    running = True
-    run = 0
-    while type(running) is not list:
-        running = readFile()
-
-    print('\nReading File')
-
-    while run is not 2:
-        run = input("""Please select one of the options:
-                 1 - Create Issues
-                 2 - Terminate Program \n""")
-        print(options(run, running))
-
-
 def login():
+    """ Method for logging into JIRA and capturing Session
+        Args: None
+        Return: Session
+    """
     authenticated = False
     while authenticated is not True:
         # username = input("Please enter your JIRA username: ")
         # password = getpass.getpass("Please enter your JIRA password: ")
+        username = "admin"
+        password = "admin"
         session = requests.Session()
-        # session.auth = (username, password)
         cred = json.dumps({"username": username, "password": password})
         s = session.post(constants.URI_LOGIN,
                          headers=constants.APPLICATION_JSON,
                          data=cred)
         authenticated = s.ok
         if (not s.ok):
-            print("""\nInvalid login credentials.
-                     Please enter the correct username/password. \n""")
+            print("\nInvalid login credentials. \
+                    Please enter the correct username/password. \n")
         # print(s.status_code)
     return session
-
-
-def options(option, issue):
-    return {
-        '1': create_issues(issue)
-    }.get(option, "0")
 
 
 def get_issuetypes(json_createmeta):
@@ -267,7 +337,7 @@ def write_jira_key(issues, filename):
         for issue in issues:
             req_sheet['F' + str(issue.row)] = issue.jira_key
             val = constants.URL_BROWSE + issue.jira_key
-            req_sheet['F' + str(issue.row)].hyperlink = Hyperlink(ref="", 
+            req_sheet['F' + str(issue.row)].hyperlink = Hyperlink(ref="",
                                                                   target=val)
         wb.save(filename)
     except Exception:
@@ -323,11 +393,6 @@ def update_status(issue_list, session, filename):
 
 
 def form_query(issue):
-    # issue.change_description  #description
-    # issue.parent
-    # issue.customer
-    # issue.process
-    # issue.platform
     summary = issue.process + ': ' + issue.change_type
     query = "project=" + issue.project_key + " and summary~'" \
             + summary + "' and description~'" + issue.change_description + "'"
@@ -387,11 +452,13 @@ def create_issues(session, issues, filename):
             if not issue.jira_key and not duplicate:
                 non_created_issues.append(issue)
         if non_created_issues:
-            json_issue_response = jira_create_issues(session, non_created_issues)
+            json_issue_response = jira_create_issues(session,
+                                                     non_created_issues)
             i = 0
             for pending_issue in non_created_issues:
                 issue_reponse = json.loads(json_issue_response.text)
-                pending_issue.jira_key = issue_reponse['issues'][0]['key']
+                pending_issue.jira_key = issue_reponse['issues'][i]['key']
+                print(pending_issue.jira_key)
                 issueStatusJson = get_issue(pending_issue.jira_key, session)
                 issueStatus = json.loads(issueStatusJson.text)
                 pending_issue.status = issueStatus['fields']['status']['name']

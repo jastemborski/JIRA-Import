@@ -3,17 +3,20 @@ import json
 from JiraApi import jira_create_issues, create_meta, search_issues, get_issue
 
 
-# create issues/stories update Status
-filename = "jira-import-template.xlsx"
-s = utilities.login()
-wb = utilities.readFile(filename)
-issues = utilities.parseFile(wb, session=s, filename=filename)
-utilities.create_issues(s, issues, filename)
+"""==========================================================================
+|               create issues/stories update Status                         |
+=========================================================================="""
 
-# issue_response = json.loads(utilities.create_issues(s, issues).text)
-# print(issue_response)
-# utilities.write_jira_key(issue_response, len(issues), filename)
-# utilities.write_status(issue_response, len(issues), filename, s)
+# filename = "jira-import-template.xlsx"
+# s = utilities.login()
+# wb = utilities.readFile(filename)
+# issues = utilities.parseFile(wb, session=s, filename=filename)
+# utilities.create_issues(s, issues, filename)
+
+
+"""==========================================================================
+|                           Updates Stories                                 |
+=========================================================================="""
 
 # filename = "jira-import-template.xlsx"
 # s = utilities.login()
@@ -21,6 +24,9 @@ utilities.create_issues(s, issues, filename)
 # issues = utilities.parseFile(wb, session=s, filename=filename)
 # utilities.update_status(issues, s, filename)
 
+"""==========================================================================
+|               Seach Queries                                               |
+=========================================================================="""
 
 # search_query = "project=TEST and summary=Complaint: Modify Field Values"
 # field_list = []
@@ -30,6 +36,10 @@ utilities.create_issues(s, issues, filename)
 # search = json.loads(search_issues(search_query, field_list=field_list, session=s).text)
 # print(search['issues'][0]['key'])
 
+
+"""==========================================================================
+|               Create Meta Data                                            |
+=========================================================================="""
 
 # meta = create_meta(s)
 # data = utilities.get_issuetypes(meta.text)
