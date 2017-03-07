@@ -1,6 +1,6 @@
 from Issue import Issue
 import openpyxl
-from JiraApi import create_issues, create_issue, get_issue
+from JiraApi import jira_create_issues, create_issue, get_issue, search_issues
 import requests
 import constants
 import json
@@ -13,6 +13,7 @@ from openpyxl.styles import Font, PatternFill, colors, Color
 
 
 PROJECT_KEY = "TEST"
+ISSUE_TYPE = "10102"
 # PROJECT_KEY = "DELIVERCOM"
 info_row = 2
 PROCESS_DICT = {'Complaint': 'B', 'Inquiry': 'C', 'CAPA': 'D',
@@ -185,9 +186,10 @@ def parseFile(wb, session=None, filename=None):
             issue.notes = get_notes(req_sheet, row)
             issue.parent = get_parent(jira_sheet, issue.process)
             issue.customer = customer
-            issue.issue_type = "10102"
+            issue.issue_type = ISSUE_TYPE
             issue.project_key = PROJECT_KEY
             issue.jira_key = req_sheet['F' + str(row)].value
+            issue.row = str(row)
             issues.append(issue)
         return issues
     except Exception:
@@ -212,8 +214,8 @@ def run():
 def login():
     authenticated = False
     while authenticated is not True:
-        username = input("Please enter your JIRA username: ")
-        password = getpass.getpass("Please enter your JIRA password: ")
+        # username = input("Please enter your JIRA username: ")
+        # password = getpass.getpass("Please enter your JIRA password: ")
         session = requests.Session()
         # session.auth = (username, password)
         cred = json.dumps({"username": username, "password": password})
@@ -258,22 +260,18 @@ def get_issuetypes(json_createmeta):
     return metadata
 
 
-def write_jira_key(issues, num_issues, filename):
+def write_jira_key(issues, filename):
     try:
-        row_seed = 2
-        wb = openpyxl.load_workbook('jira-import-template.xlsx')
+        wb = openpyxl.load_workbook(filename)
         req_sheet = wb.get_sheet_by_name('Requirements')
-        for issue_index in range(0, num_issues):
-            issueKey = issues['issues'][issue_index]['key']
-            req_sheet['F' + str(row_seed)] = issueKey
-            val = constants.URL_BROWSE + issueKey
-            req_sheet['F' + str(row_seed)].hyperlink = Hyperlink(ref="", target=val)
-            # req_sheet['F' + str(row_seed)].font = Font(color="006100")
-            # req_sheet['F' + str(row_seed)].fill = PatternFill("solid", fgColor="C6EFCE")
-            row_seed += 1
+        for issue in issues:
+            req_sheet['F' + str(issue.row)] = issue.jira_key
+            val = constants.URL_BROWSE + issue.jira_key
+            req_sheet['F' + str(issue.row)].hyperlink = Hyperlink(ref="", 
+                                                                  target=val)
         wb.save(filename)
     except Exception:
-        print("Please close the file, then try again.")
+        print("Error: Write Jira Key - Please close the file, then try again.")
 
 
 def update_status(issue_list, session, filename):
@@ -336,49 +334,83 @@ def form_query(issue):
     return query
 
 
-def write_status(issues, num_issues, filename, session):
+def write_status(issues, filename, session):
     try:
-        row_seed = 2
-        wb = openpyxl.load_workbook('jira-import-template.xlsx')
+        wb = openpyxl.load_workbook(filename)
         req_sheet = wb.get_sheet_by_name('Requirements')
-        for issue_index in range(0, num_issues):
-            issueKey = issues['issues'][issue_index]['key']
-            issueStatusJson = get_issue(issueKey, session)
-            issueStatus = json.loads(issueStatusJson.text)
-            issueStatus = issueStatus['fields']['status']['name']
-            req_sheet['G' + str(row_seed)] = issueStatus
+        for issue in issues:
+            req_sheet['G' + issue.row] = issue.status
             done = PatternFill("solid", fgColor="C6EFCE")
             todo = PatternFill("solid", fgColor="FFC7CE")
             in_progress = PatternFill("solid", fgColor="FFEB9C")
-            if issueStatus == "To Do":
-                req_sheet['A' + str(row_seed)].fill = todo
-                req_sheet['B' + str(row_seed)].fill = todo
-                req_sheet['C' + str(row_seed)].fill = todo
-                req_sheet['D' + str(row_seed)].fill = todo
-                req_sheet['E' + str(row_seed)].fill = todo
-                req_sheet['F' + str(row_seed)].fill = todo
-                req_sheet['G' + str(row_seed)].fill = todo
-            elif issueStatus == "Done":
-                req_sheet['B' + str(row_seed)].fill = done
-                req_sheet['A' + str(row_seed)].fill = done
-                req_sheet['C' + str(row_seed)].fill = done
-                req_sheet['D' + str(row_seed)].fill = done
-                req_sheet['E' + str(row_seed)].fill = done
-                req_sheet['F' + str(row_seed)].fill = done
-                req_sheet['G' + str(row_seed)].fill = done
+            if issue.status == "To Do":
+                req_sheet['A' + issue.row].fill = todo
+                req_sheet['B' + issue.row].fill = todo
+                req_sheet['C' + issue.row].fill = todo
+                req_sheet['D' + issue.row].fill = todo
+                req_sheet['E' + issue.row].fill = todo
+                req_sheet['F' + issue.row].fill = todo
+                req_sheet['G' + issue.row].fill = todo
+            elif issue.status == "Done":
+                req_sheet['B' + issue.row].fill = done
+                req_sheet['A' + issue.row].fill = done
+                req_sheet['C' + issue.row].fill = done
+                req_sheet['D' + issue.row].fill = done
+                req_sheet['E' + issue.row].fill = done
+                req_sheet['F' + issue.row].fill = done
+                req_sheet['G' + issue.row].fill = done
             else:
-                req_sheet['A' + str(row_seed)].fill = in_progress
-                req_sheet['B' + str(row_seed)].fill = in_progress
-                req_sheet['C' + str(row_seed)].fill = in_progress
-                req_sheet['D' + str(row_seed)].fill = in_progress
-                req_sheet['E' + str(row_seed)].fill = in_progress
-                req_sheet['F' + str(row_seed)].fill = in_progress
-                req_sheet['G' + str(row_seed)].fill = in_progress
-            row_seed += 1
+                req_sheet['A' + issue.row].fill = in_progress
+                req_sheet['B' + issue.row].fill = in_progress
+                req_sheet['C' + issue.row].fill = in_progress
+                req_sheet['D' + issue.row].fill = in_progress
+                req_sheet['E' + issue.row].fill = in_progress
+                req_sheet['F' + issue.row].fill = in_progress
+                req_sheet['G' + issue.row].fill = in_progress
         wb.save(filename)
     except Exception:
         print("Please close the file, then try again.")
 
-
 # def for_queries(issue_list):
 #     for issue in issue_list:
+
+
+def create_issues(session, issues, filename):
+    # non_created_issues = [(issue for issue in Issues
+    #                        if not is_issue_created(issue))]
+    # for issue in non_created_issues:
+    #     print(issue)
+    try:
+        non_created_issues = []
+        for issue in issues:
+            duplicate = is_duplicate(issue, session)
+            if not issue.jira_key and not duplicate:
+                non_created_issues.append(issue)
+        if non_created_issues:
+            json_issue_response = jira_create_issues(session, non_created_issues)
+            i = 0
+            for pending_issue in non_created_issues:
+                issue_reponse = json.loads(json_issue_response.text)
+                pending_issue.jira_key = issue_reponse['issues'][0]['key']
+                issueStatusJson = get_issue(pending_issue.jira_key, session)
+                issueStatus = json.loads(issueStatusJson.text)
+                pending_issue.status = issueStatus['fields']['status']['name']
+                i = i + 1
+            write_jira_key(non_created_issues, filename)
+            write_status(non_created_issues, filename, session)
+        else:
+            return print("Nothing to update!")
+    except Exception:
+        print("Error: Create_Issues")
+
+
+def is_issue_created(issue, s):
+    return True if issue.jira_key else False
+
+
+def is_duplicate(issue, session):
+    search_query = form_query(issue)
+    field_list = []
+    field_list.append("summary, status")
+    search = json.loads(search_issues(search_query,field_list=field_list, session=session).text)
+    return True if search['total'] else False

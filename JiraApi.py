@@ -45,16 +45,15 @@ def create_issue(issue, post=False, session=None):
                             json=(json.loads(jIssue)))
 
 
-def create_issues(session, Issues):
+def jira_create_issues(session, issues):
     jIssues = ""
-    for issue in Issues:
+    for issue in issues:
         jIssues += json.dumps(create_issue(issue, session=session))
-        if issue is not Issues[-1]:
+        if issue is not issues[-1]:
             jIssues += ','
         # jIssues = temp_issue + ','
     jIssues = '{"issueUpdates":[' + jIssues + ']}'
     # return jIssues
-    # print(jIssues)
     return session.post(constants.URI_CREATE_ISSUES,
                         headers=constants.APPLICATION_JSON,
                         json=(json.loads(jIssues)))
