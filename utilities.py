@@ -113,15 +113,37 @@ def get_status(req_sheet, row_num):
     return (req_sheet['G' + str(row_num)].value)
 
 
-def get_assign_to(req_sheet, row_num):
-    """ Accessor for Assign To field
+def get_subtask_assignee(req_sheet, row_num):
+    """ Accessor for the Assignee field
     Args:
         req_sheet: A variable holding an Excel Workbook sheet in memory.
         row_num: A variable holding the row # of the data being accessed.
     Returns:
-            A string value of the Notes
+            A string value of the Assignee
     """
     return (req_sheet['H' + str(row_num)].value)
+
+
+def get_sprint(req_sheet, row_num):
+    """ Accessor for the Sprint field
+    Args:
+        req_sheet: A variable holding an Excel Workbook sheet in memory.
+        row_num: A variable holding the row # of the data being accessed.
+    Returns:
+            A string value of the Sprint
+    """
+    return (req_sheet['I' + str(row_num)].value)
+
+
+def get_comments(req_sheet, row_num):
+    """ Accessor for Comments field
+    Args:
+        req_sheet: A variable holding an Excel Workbook sheet in memory.
+        row_num: A variable holding the row # of the data being accessed.
+    Returns:
+            A string value of the Comments
+    """
+    return (req_sheet['J' + str(row_num)].value)
 
 
 def get_customer(customer_sheet):
@@ -158,6 +180,29 @@ def get_parent(jira_sheet, process):
                 CAPA, Quality Event, Change Control.\n""")
 
 
+def get_story_assignee(jira_sheet, process):
+    """ Accessor for Story Assignee
+
+    Accessor method for retrieving the value for Story Assignee on the
+    JIRA Stories Sheet.
+
+    There is a check to make certain the process in question is amongst those
+    qualified to exist.
+
+    Args:
+        jira_sheet: A variable holding an Excel Workbook sheet in memory.
+        process: A variable holding the process of an Issue.
+    Returns:
+            A string value of the Parent
+"""
+    if process in PROCESS_DICT:
+        return (jira_sheet[PROCESS_DICT.get(process) + "6"].value)
+    else:
+        print("""Error: " + process + " is an invalid process.
+                The following QE processes are acceptable: Complaints, Inquiry,
+                CAPA, Quality Event, Change Control.\n""")
+
+
 def get_stories(jira_sheet, customer_sheet):
     """ Captures information residing in the JIRA Stories sheet of the Workbook
 
@@ -186,6 +231,7 @@ def get_stories(jira_sheet, customer_sheet):
                       jira_sheet[COL_DICT[c] + "4"].value,  # description
                       jira_sheet[COL_DICT[c] + "5"].value,  # project
                       customer_sheet['A2'].value,  # customer
+                      jira_sheet[COL_DICT[c] + "6"].value,  # assignee
                       COL_DICT[c])  # col
         story_list.append(story)
         # print(story.key)
@@ -222,6 +268,8 @@ def create_stories(story_dict, session=None, wb=None, filename=None):
                 _issue.project_key = PROJECT_KEY
                 _issue.process = story.summary
                 _issue.change_description = story.description
+                # print(story.assignee)
+                _issue.assignee = story.assignee
                 if story.summary and story.description:
                     issue = create_issue(_issue, True, session)
                     # print(issue)
@@ -309,6 +357,7 @@ def parseFile(wb, session=None, filename=None):
             issue.project_key = PROJECT_KEY
             issue.jira_key = get_jira_task(req_sheet, row)
             issue.row = str(row)
+            issue.assignee = get_subtask_assignee(req_sheet, row)
             issues.append(issue)
         return issues
     except Exception:
@@ -469,9 +518,6 @@ def write_status(issues, filename, session):
     except Exception:
         print("Please close the file, then try again.")
 
-# def for_queries(issue_list):
-#     for issue in issue_list:
-
 
 def create_issues(session, issues, filename):
     # non_created_issues = [(issue for issue in Issues
@@ -481,8 +527,9 @@ def create_issues(session, issues, filename):
     try:
         non_created_issues = []
         for issue in issues:
-            duplicate = is_duplicate(issue, session)
+            duplicate = is_duplicate(issue, session, filename)
             if not issue.jira_key and not duplicate:
+                print("test")
                 non_created_issues.append(issue)
         if non_created_issues:
             json_issue_response = jira_create_issues(session,
@@ -491,7 +538,6 @@ def create_issues(session, issues, filename):
             for pending_issue in non_created_issues:
                 issue_reponse = json.loads(json_issue_response.text)
                 pending_issue.jira_key = issue_reponse['issues'][i]['key']
-                print(pending_issue.jira_key)
                 issueStatusJson = get_issue(pending_issue.jira_key, session)
                 issueStatus = json.loads(issueStatusJson.text)
                 pending_issue.status = issueStatus['fields']['status']['name']
@@ -499,7 +545,7 @@ def create_issues(session, issues, filename):
             write_jira_key(non_created_issues, filename)
             write_status(non_created_issues, filename, session)
         else:
-            return print("Nothing to update!")
+            return print("No issues to add!")
     except Exception:
         print("Error: Create_Issues")
 
@@ -508,9 +554,23 @@ def is_issue_created(issue, s):
     return True if issue.jira_key else False
 
 
-def is_duplicate(issue, session):
-    search_query = form_query(issue)
-    field_list = []
-    field_list.append("summary, status")
-    search = json.loads(search_issues(search_query,field_list=field_list, session=session).text)
-    return True if search['total'] else False
+def is_duplicate(issue, session, filename):
+    try:
+        search_query = form_query(issue)
+        field_list = []
+        field_list.append("summary, status")
+        search = json.loads(search_issues(search_query,
+                                          field_list=field_list,
+                                          session=session).text)
+        if search['total'] and not issue.jira_key:
+            # print(json.dumps(search, indent=3))
+            wb = openpyxl.load_workbook(filename)
+            req_sheet = wb.get_sheet_by_name('Requirements')
+            req_sheet['E' + str(issue.row)] = "Issue: " + \
+                search['issues'][0]["key"] + " already exists."
+            wb.save(filename)
+            return True
+        else:
+            return False
+    except Exception:
+        print("Error in issue created")

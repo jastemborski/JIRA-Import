@@ -11,6 +11,8 @@ STORY = "10100"  # Test
 
 def create_issue(issue, post=False, session=None):
     # issue is a subtask
+    optional_fields = ', "assignee": { "name":"' + issue.assignee + '"} ' \
+                      if issue.assignee else ""
     if len(issue.parent) is not 0:
         parent = '"parent":{"key":"' + issue.parent + '"},'
         summary = issue.process + ': ' + issue.change_type
@@ -34,9 +36,8 @@ def create_issue(issue, post=False, session=None):
     jIssue = '{"update":{}, "fields":{"project":{"key": "' \
              + issue.project_key + '"},' + parent + '"summary": "' + summary + '", \
              "description": "' + issue.change_description + ' \
-             ","issuetype":{"id":' + issuetype + '}' + custom_fields + '}}'
-    # print(jIssue)
-
+             ","issuetype":{"id":' + issuetype + '}' \
+             + custom_fields + optional_fields + '}}'
     if not post:
         return json.loads(jIssue)
     else:
@@ -49,6 +50,7 @@ def jira_create_issues(session, issues):
     jIssues = ""
     for issue in issues:
         jIssues += json.dumps(create_issue(issue, session=session))
+        print(jIssues)
         if issue is not issues[-1]:
             jIssues += ','
         # jIssues = temp_issue + ','

@@ -1,11 +1,12 @@
 class Story:
     def __init__(self, key="", summary=None, description=None,
-                 project=None, customer=None, col=None):
+                 project=None, customer=None, assignee=None, col=None):
         self.key = key  # if key is not None else ""
         self.summary = summary if summary is not None else ""
         self.description = description if description is not None else ""
         self.project = project if project is not None else ""
         self.customer = customer if customer is not None else ""
+        self.assignee = assignee if assignee is not None else ""
         self.col = col if col is not None else ""
 
     def __str__(self):
