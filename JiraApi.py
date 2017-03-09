@@ -50,7 +50,6 @@ def jira_create_issues(session, issues):
     jIssues = ""
     for issue in issues:
         jIssues += json.dumps(create_issue(issue, session=session))
-        print(jIssues)
         if issue is not issues[-1]:
             jIssues += ','
         # jIssues = temp_issue + ','
@@ -90,4 +89,23 @@ def search_issues(search_query, field_list=None, start="0", max_results="15",
 
 def get_issue(key, session):
     return session.get((constants.URI_GET_ISSUE + '/' + key),
+                       headers=constants.APPLICATION_JSON)
+
+
+def move_issues_to_sprint(sprint_id, jira_key, session):
+    query = '{ "issues": ["' + jira_key + '"]}'
+    return session.post((constants.URI_MOVE_ISSUES_TO_SPRINT + sprint_id +
+                         '/issue'),
+                        headers=constants.APPLICATION_JSON,
+                        json=(json.loads(query)))
+
+
+def get_all_boards(session):
+    return session.get(constants.URI_GET_ALL_BOARDS,
+                       headers=constants.APPLICATION_JSON)
+
+
+def get_all_sprints(board_id, session):
+    return session.get(constants.URI_GET_ALL_BOARDS + str(board_id) +
+                       '/sprint',
                        headers=constants.APPLICATION_JSON)

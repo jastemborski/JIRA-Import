@@ -3,7 +3,7 @@ class Issue:
     def __init__(self, change_type=None, change_description=None,
                  platform=None, process=None, parent=None, customer=None,
                  project_key=None, notes=None, custom_fields=None,
-                 issue_type=None, status=None, jira_key=None, row=None, 
+                 issue_type=None, status=None, jira_key=None, row=None,
                  assignee=""):
         self.change_type = change_type if change_type is not None else ""
         self.change_description = change_description if \

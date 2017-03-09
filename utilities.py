@@ -1,6 +1,7 @@
 from Issue import Issue
 import openpyxl
 from JiraApi import jira_create_issues, create_issue, get_issue, search_issues
+from JiraApi import move_issues_to_sprint, get_all_boards, get_all_sprints
 import requests
 import constants
 import json
@@ -321,9 +322,10 @@ def parseFile(wb, session=None, filename=None):
         Iterates through each row containing data within the Workbook
         while creating an Issue object capturing all of the information.
 
-        A Story ( Parent ) is required in order to create Sub-tasks ( info on Requirements sheet)
-        therefore there is a check prior to processing the file in place in order to create
-        a Story ( Parent ) if they don't already exist.
+        A Story ( Parent ) is required in order to create Sub-tasks
+        ( info on Requirements sheet) therefore there is a check prior to
+        processing the file in place in order to create a Story ( Parent )
+        if they don't already exist.
 
     Args:
         wb: A variable holding a Excel Workbook in memory.
@@ -432,46 +434,52 @@ def update_status(issue_list, session, filename):
         wb = openpyxl.load_workbook('jira-import-template.xlsx')
         req_sheet = wb.get_sheet_by_name('Requirements')
         for issue in issue_list:
-            issueStatusJson = get_issue(issue.jira_key, session)
-            issueStatus = json.loads(issueStatusJson.text)
-            issueStatus = issueStatus['fields']['status']['name']
-            req_sheet['G' + str(row_seed)] = issueStatus
-            done = PatternFill("solid", fgColor="C6EFCE")
-            todo = PatternFill("solid", fgColor="FFC7CE")
-            in_progress = PatternFill("solid", fgColor="FFEB9C")
-            if issueStatus == "To Do":
-                req_sheet['A' + str(row_seed)].fill = todo
-                req_sheet['B' + str(row_seed)].fill = todo
-                req_sheet['C' + str(row_seed)].fill = todo
-                req_sheet['D' + str(row_seed)].fill = todo
-                req_sheet['E' + str(row_seed)].fill = todo
-                req_sheet['F' + str(row_seed)].fill = todo
-                req_sheet['G' + str(row_seed)].fill = todo
-            elif issueStatus == "Done":
-                req_sheet['B' + str(row_seed)].fill = done
-                req_sheet['A' + str(row_seed)].fill = done
-                req_sheet['C' + str(row_seed)].fill = done
-                req_sheet['D' + str(row_seed)].fill = done
-                req_sheet['E' + str(row_seed)].fill = done
-                req_sheet['F' + str(row_seed)].fill = done
-                req_sheet['G' + str(row_seed)].fill = done
-            else:
-                req_sheet['A' + str(row_seed)].fill = in_progress
-                req_sheet['B' + str(row_seed)].fill = in_progress
-                req_sheet['C' + str(row_seed)].fill = in_progress
-                req_sheet['D' + str(row_seed)].fill = in_progress
-                req_sheet['E' + str(row_seed)].fill = in_progress
-                req_sheet['F' + str(row_seed)].fill = in_progress
-                req_sheet['G' + str(row_seed)].fill = in_progress
+            if issue.jira_key:
+                issueStatusJson = get_issue(issue.jira_key, session)
+                issueStatus = json.loads(issueStatusJson.text)
+                issueStatus = issueStatus['fields']['status']['name']
+                req_sheet['G' + str(row_seed)] = issueStatus
+                done = PatternFill("solid", fgColor="C6EFCE")
+                todo = PatternFill("solid", fgColor="FFC7CE")
+                in_progress = PatternFill("solid", fgColor="FFEB9C")
+                if issueStatus == "To Do":
+                    req_sheet['A' + str(row_seed)].fill = todo
+                    req_sheet['B' + str(row_seed)].fill = todo
+                    req_sheet['C' + str(row_seed)].fill = todo
+                    req_sheet['D' + str(row_seed)].fill = todo
+                    req_sheet['E' + str(row_seed)].fill = todo
+                    req_sheet['F' + str(row_seed)].fill = todo
+                    req_sheet['G' + str(row_seed)].fill = todo
+                    req_sheet['H' + str(row_seed)].fill = todo
+                    req_sheet['I' + str(row_seed)].fill = todo
+                elif issueStatus == "Done":
+                    req_sheet['B' + str(row_seed)].fill = done
+                    req_sheet['A' + str(row_seed)].fill = done
+                    req_sheet['C' + str(row_seed)].fill = done
+                    req_sheet['D' + str(row_seed)].fill = done
+                    req_sheet['E' + str(row_seed)].fill = done
+                    req_sheet['F' + str(row_seed)].fill = done
+                    req_sheet['G' + str(row_seed)].fill = done
+                    req_sheet['H' + str(row_seed)].fill = done
+                    req_sheet['I' + str(row_seed)].fill = done
+                else:
+                    req_sheet['A' + str(row_seed)].fill = in_progress
+                    req_sheet['B' + str(row_seed)].fill = in_progress
+                    req_sheet['C' + str(row_seed)].fill = in_progress
+                    req_sheet['D' + str(row_seed)].fill = in_progress
+                    req_sheet['E' + str(row_seed)].fill = in_progress
+                    req_sheet['F' + str(row_seed)].fill = in_progress
+                    req_sheet['G' + str(row_seed)].fill = in_progress
+                    req_sheet['H' + str(row_seed)].fill = in_progress
+                    req_sheet['I' + str(row_seed)].fill = in_progress
             row_seed += 1
         wb.save(filename)
     except Exception:
         print("Please close the file, then try again.")
 
 
-# def scrub_doc cleans internal info to send dox to client
-
-# def merge_docs merges clients and local
+""" Todo: def scrub_doc cleans internal info to send dox to client """
+""" Todo: def merge_docs merges clients and local """
 
 
 def form_query(issue):
@@ -529,7 +537,6 @@ def create_issues(session, issues, filename):
         for issue in issues:
             duplicate = is_duplicate(issue, session, filename)
             if not issue.jira_key and not duplicate:
-                print("test")
                 non_created_issues.append(issue)
         if non_created_issues:
             json_issue_response = jira_create_issues(session,
@@ -568,9 +575,54 @@ def is_duplicate(issue, session, filename):
             req_sheet = wb.get_sheet_by_name('Requirements')
             req_sheet['E' + str(issue.row)] = "Issue: " + \
                 search['issues'][0]["key"] + " already exists."
+            req_sheet['G' + issue.row] = "Duplicate"
+            duplicate = PatternFill("solid", fgColor="DBDBDB")
+            req_sheet['A' + issue.row].fill = duplicate
+            req_sheet['B' + issue.row].fill = duplicate
+            req_sheet['C' + issue.row].fill = duplicate
+            req_sheet['D' + issue.row].fill = duplicate
+            req_sheet['E' + issue.row].fill = duplicate
+            req_sheet['F' + issue.row].fill = duplicate
+            req_sheet['G' + issue.row].fill = duplicate
+            req_sheet['H' + issue.row].fill = duplicate
+            req_sheet['I' + issue.row].fill = duplicate
             wb.save(filename)
             return True
         else:
             return False
     except Exception:
         print("Error in issue created")
+
+
+# TODO def_highlight_row(row, hex_color, wb):
+
+
+def get_board_id(board_name, session):
+    all_boards = json.loads(get_all_boards(session).text)
+    num_boards = len(all_boards['values'])
+    for i_board in range(0, num_boards):
+        if all_boards['values'][i_board]['name'].upper() == board_name.upper():
+            return str(all_boards['values'][i_board]['id'])
+
+
+def get_sprint_id(board_id, sprint_name, session):
+    all_sprints = json.loads(get_all_sprints(board_id, session).text)
+    num_sprints = len(all_sprints['values'])
+    for index in range(0, num_sprints):
+        if all_sprints['values'][index]['name'].upper() == sprint_name.upper():
+            return str(all_sprints['values'][index]['id'])
+
+
+def move_to_sprint(session, board_name, sprint_name, issue_key):
+    try:
+        board_id = get_board_id(board_name, session)
+        if board_id is None:
+            error_message = "Could not find the board."
+            raise TypeError
+        sprint_id = get_sprint_id(board_id, sprint_name, session)
+        if sprint_id is None:
+            error_message = "Could not find the sprint."
+            raise TypeError
+        return move_issues_to_sprint(sprint_id, issue_key, session)
+    except TypeError:
+        print(error_message)
