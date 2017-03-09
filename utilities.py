@@ -439,39 +439,12 @@ def update_status(issue_list, session, filename):
                 issueStatus = json.loads(issueStatusJson.text)
                 issueStatus = issueStatus['fields']['status']['name']
                 req_sheet['G' + str(row_seed)] = issueStatus
-                done = PatternFill("solid", fgColor="C6EFCE")
-                todo = PatternFill("solid", fgColor="FFC7CE")
-                in_progress = PatternFill("solid", fgColor="FFEB9C")
-                if issueStatus == "To Do":
-                    req_sheet['A' + str(row_seed)].fill = todo
-                    req_sheet['B' + str(row_seed)].fill = todo
-                    req_sheet['C' + str(row_seed)].fill = todo
-                    req_sheet['D' + str(row_seed)].fill = todo
-                    req_sheet['E' + str(row_seed)].fill = todo
-                    req_sheet['F' + str(row_seed)].fill = todo
-                    req_sheet['G' + str(row_seed)].fill = todo
-                    req_sheet['H' + str(row_seed)].fill = todo
-                    req_sheet['I' + str(row_seed)].fill = todo
-                elif issueStatus == "Done":
-                    req_sheet['B' + str(row_seed)].fill = done
-                    req_sheet['A' + str(row_seed)].fill = done
-                    req_sheet['C' + str(row_seed)].fill = done
-                    req_sheet['D' + str(row_seed)].fill = done
-                    req_sheet['E' + str(row_seed)].fill = done
-                    req_sheet['F' + str(row_seed)].fill = done
-                    req_sheet['G' + str(row_seed)].fill = done
-                    req_sheet['H' + str(row_seed)].fill = done
-                    req_sheet['I' + str(row_seed)].fill = done
+                if issue.status == "To Do":
+                    highlight_row(issue.row, "FFC7CE", req_sheet)
+                elif issue.status == "Done":
+                    highlight_row(issue.row, "C6EFCE", req_sheet)
                 else:
-                    req_sheet['A' + str(row_seed)].fill = in_progress
-                    req_sheet['B' + str(row_seed)].fill = in_progress
-                    req_sheet['C' + str(row_seed)].fill = in_progress
-                    req_sheet['D' + str(row_seed)].fill = in_progress
-                    req_sheet['E' + str(row_seed)].fill = in_progress
-                    req_sheet['F' + str(row_seed)].fill = in_progress
-                    req_sheet['G' + str(row_seed)].fill = in_progress
-                    req_sheet['H' + str(row_seed)].fill = in_progress
-                    req_sheet['I' + str(row_seed)].fill = in_progress
+                    highlight_row(issue.row, "FFEB9C", req_sheet)
             row_seed += 1
         wb.save(filename)
     except Exception:
@@ -495,33 +468,12 @@ def write_status(issues, filename, session):
         req_sheet = wb.get_sheet_by_name('Requirements')
         for issue in issues:
             req_sheet['G' + issue.row] = issue.status
-            done = PatternFill("solid", fgColor="C6EFCE")
-            todo = PatternFill("solid", fgColor="FFC7CE")
-            in_progress = PatternFill("solid", fgColor="FFEB9C")
             if issue.status == "To Do":
-                req_sheet['A' + issue.row].fill = todo
-                req_sheet['B' + issue.row].fill = todo
-                req_sheet['C' + issue.row].fill = todo
-                req_sheet['D' + issue.row].fill = todo
-                req_sheet['E' + issue.row].fill = todo
-                req_sheet['F' + issue.row].fill = todo
-                req_sheet['G' + issue.row].fill = todo
+                highlight_row(issue.row, "FFC7CE", req_sheet)
             elif issue.status == "Done":
-                req_sheet['B' + issue.row].fill = done
-                req_sheet['A' + issue.row].fill = done
-                req_sheet['C' + issue.row].fill = done
-                req_sheet['D' + issue.row].fill = done
-                req_sheet['E' + issue.row].fill = done
-                req_sheet['F' + issue.row].fill = done
-                req_sheet['G' + issue.row].fill = done
+                highlight_row(issue.row, "C6EFCE", req_sheet)
             else:
-                req_sheet['A' + issue.row].fill = in_progress
-                req_sheet['B' + issue.row].fill = in_progress
-                req_sheet['C' + issue.row].fill = in_progress
-                req_sheet['D' + issue.row].fill = in_progress
-                req_sheet['E' + issue.row].fill = in_progress
-                req_sheet['F' + issue.row].fill = in_progress
-                req_sheet['G' + issue.row].fill = in_progress
+                highlight_row(issue.row, "FFEB9C", req_sheet)
         wb.save(filename)
     except Exception:
         print("Please close the file, then try again.")
@@ -576,16 +528,7 @@ def is_duplicate(issue, session, filename):
             req_sheet['E' + str(issue.row)] = "Issue: " + \
                 search['issues'][0]["key"] + " already exists."
             req_sheet['G' + issue.row] = "Duplicate"
-            duplicate = PatternFill("solid", fgColor="DBDBDB")
-            req_sheet['A' + issue.row].fill = duplicate
-            req_sheet['B' + issue.row].fill = duplicate
-            req_sheet['C' + issue.row].fill = duplicate
-            req_sheet['D' + issue.row].fill = duplicate
-            req_sheet['E' + issue.row].fill = duplicate
-            req_sheet['F' + issue.row].fill = duplicate
-            req_sheet['G' + issue.row].fill = duplicate
-            req_sheet['H' + issue.row].fill = duplicate
-            req_sheet['I' + issue.row].fill = duplicate
+            highlight_row(issue.row, "DBDBDB", req_sheet)
             wb.save(filename)
             return True
         else:
@@ -594,7 +537,11 @@ def is_duplicate(issue, session, filename):
         print("Error in issue created")
 
 
-# TODO def_highlight_row(row, hex_color, wb):
+def highlight_row(row, hex_color, sheet):
+    max_col = sheet.max_column
+    color = PatternFill("solid", fgColor=hex_color)
+    for col in range(1, max_col + 1):
+        sheet[COL_DICT[col] + row].fill = color
 
 
 def get_board_id(board_name, session):
