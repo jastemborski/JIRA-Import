@@ -233,6 +233,8 @@ def get_stories(jira_sheet, customer_sheet):
                       jira_sheet[COL_DICT[c] + "5"].value,  # project
                       customer_sheet['A2'].value,  # customer
                       jira_sheet[COL_DICT[c] + "6"].value,  # assignee
+                      jira_sheet[COL_DICT[c] + "7"].value,  # board
+                      jira_sheet[COL_DICT[c] + "8"].value,  # sprint
                       COL_DICT[c])  # col
         story_list.append(story)
         # print(story.key)
@@ -269,10 +271,19 @@ def create_stories(story_dict, session=None, wb=None, filename=None):
                 _issue.project_key = PROJECT_KEY
                 _issue.process = story.summary
                 _issue.change_description = story.description
+                _issue.board = story.board
+                _issue.sprint = story.sprint
                 # print(story.assignee)
                 _issue.assignee = story.assignee
                 if story.summary and story.description:
                     issue = create_issue(_issue, True, session)
+                    story_json = json.loads(issue.text)
+                    story_key = story_json['key']
+                    # print(story_key)
+                    # print(story.board)
+                    # print(story.sprint)
+                    print(move_to_sprint(session, story.board,
+                                         story.sprint, story_key))
                     # print(issue)
                     # print(issue.text)
                     info = json.loads(issue.text)
@@ -373,10 +384,8 @@ def login():
     """
     authenticated = False
     while authenticated is not True:
-        # username = input("Please enter your JIRA username: ")
-        # password = getpass.getpass("Please enter your JIRA password: ")
-        username = "admin"
-        password = "admin"
+        username = input("Please enter your JIRA username: ")
+        password = getpass.getpass("Please enter your JIRA password: ")
         session = requests.Session()
         cred = json.dumps({"username": username, "password": password})
         s = session.post(constants.URI_LOGIN,
@@ -439,9 +448,9 @@ def update_status(issue_list, session, filename):
                 issueStatus = json.loads(issueStatusJson.text)
                 issueStatus = issueStatus['fields']['status']['name']
                 req_sheet['G' + str(row_seed)] = issueStatus
-                if issue.status == "To Do":
+                if issueStatus == "To Do":
                     highlight_row(issue.row, "FFC7CE", req_sheet)
-                elif issue.status == "Done":
+                elif issueStatus == "Done":
                     highlight_row(issue.row, "C6EFCE", req_sheet)
                 else:
                     highlight_row(issue.row, "FFEB9C", req_sheet)
