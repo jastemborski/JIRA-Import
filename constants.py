@@ -2,6 +2,9 @@ APPLICATION_JSON = {'Content-Type': 'application/json'}
 URL = "https://jonastemborski.atlassian.net"  # Test Environment
 # URL = "http://jira.spartasystems.com"  # Production Environment
 
+ID_JIRA_PROCESS = 'customfield_10401'
+ID_JIRA_PLATFORM = 'customfield_10400'
+
 URL_BROWSE = URL + '/browse/'
 
 """==================================================================

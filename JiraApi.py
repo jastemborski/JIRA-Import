@@ -18,9 +18,11 @@ def create_issue(issue, post=False, session=None):
         summary = issue.process + ': ' + issue.change_type
 
         # Test Fields
-        custom_fields = ', "customfield_10200": ["' + issue.customer + '"], \
-                        "customfield_10300": ["' + issue.process + '"], \
-                        "customfield_10301": ["' + issue.platform + '"]'
+        custom_fields = ', "customfield_10200": ["' + issue.customer + '"],' \
+                        + constants.ID_JIRA_PROCESS + ': ["' \
+                        + issue.process + '"],' \
+                        + constants.ID_JIRA_PLATFORM + ' \
+                        "customfield_10400": ["' + issue.platform + '"]'
 
         # prod fields
         # custom_fields = ', "customfield_12904": ["' + issue.customer + '"], \

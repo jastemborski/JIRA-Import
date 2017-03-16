@@ -553,6 +553,46 @@ def highlight_row(row, hex_color, sheet):
         sheet[COL_DICT[col] + row].fill = color
 
 
+def update():
+    return False
+
+
+def retrieve(key, session):
+    """
+    status
+    assignee
+    sprint
+    """
+    issue_info = json.loads(get_issue(key, session).text)
+    # print(json.dumps(issue_info, indent=3))
+
+    # _change_type = extract_change_type(issue_info['fields']['summary'])
+    # print(_change_type)
+    # _platform = issue_info['fields'][constants.ID_JIRA_PLATFORM]
+    # print(_platform)
+    # _process = issue_info['fields'][constants.ID_JIRA_PROCESS]
+    # print(_process)
+    # _change_description = issue_info['fields']['description']
+    # print(_change_description)
+    # _additional_notes = extract_comments(issue_info['fields']['comment']['comments']
+    # print(extract_comments(issue_info['fields']['comment']['comments']))
+    # _status = issue_info['fields']['status']['name']
+    # print(_status)
+
+
+def extract_comments(comments):
+    size = len(comments)
+    addtional_notes = ""
+    for n in range(0, size):
+        addtional_notes = addtional_notes + comments[n]['body'] + "\n"
+    return addtional_notes
+
+
+def extract_change_type(summary):
+    _summary_list = summary.split(":")
+    return (_summary_list[1].strip())
+
+
 def get_board_id(board_name, session):
     all_boards = json.loads(get_all_boards(session).text)
     num_boards = len(all_boards['values'])
