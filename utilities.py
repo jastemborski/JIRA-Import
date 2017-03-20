@@ -393,7 +393,7 @@ def login():
                          data=cred)
         authenticated = s.ok
         if (not s.ok):
-            print("\nInvalid login credentials. \
+            print("\nInvalid login credentials. \n \
                     Please enter the correct username/password. \n")
         # print(s.status_code)
     return session
@@ -559,8 +559,6 @@ def update():
 
 def retrieve(key, session):
     """
-    status
-    assignee
     sprint
     """
     issue_info = json.loads(get_issue(key, session).text)
@@ -578,6 +576,9 @@ def retrieve(key, session):
     # print(extract_comments(issue_info['fields']['comment']['comments']))
     # _status = issue_info['fields']['status']['name']
     # print(_status)
+    # _assignee = issue_info['fields']['reporter']['displayName']
+    # print(_assignee)
+    print(issue_info['fields']['customfield_10115'])
 
 
 def extract_comments(comments):
