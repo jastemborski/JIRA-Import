@@ -2,14 +2,14 @@ from Issue import Issue
 import constants
 import json
 
-# SUBTASK = "5"  # Prod
-# STORY = "10001"  # Prod
+SUBTASK = "5"  # Prod
+STORY = "10001"  # Prod
 
-SUBTASK = "10102"  # Test
-STORY = "10100"  # Test
+# SUBTASK = "10102"  # Test
+# STORY = "10100"  # Test
 
 
-def create_issue(issue, post=False, session=None):
+def jira_create_issue(issue, post=False, session=None):
     # issue is a subtask
     optional_fields = ', "assignee": { "name":"' + issue.assignee + '"} ' \
                       if issue.assignee else ""
@@ -18,16 +18,15 @@ def create_issue(issue, post=False, session=None):
         summary = issue.process + ': ' + issue.change_type
 
         # Test Fields
-        custom_fields = ', "customfield_10200": ["' + issue.customer + '"],' \
-                        + constants.ID_JIRA_PROCESS + ': ["' \
-                        + issue.process + '"],' \
-                        + constants.ID_JIRA_PLATFORM + ' \
-                        "customfield_10400": ["' + issue.platform + '"]'
+        # custom_fields = ', "customfield_10200": ["' + issue.customer + '"], \
+        #                 "' + constants.ID_JIRA_PROCESS + '": "' \
+        #                 + issue.process + '", "' + constants.ID_JIRA_PLATFORM + '": \
+        #                 "' + issue.platform + '"'
 
         # prod fields
-        # custom_fields = ', "customfield_12904": ["' + issue.customer + '"], \
-        #                  "customfield_12906": "' + issue.process + '", \
-        #                  "customfield_13008": "' + issue.platform + '"'
+        custom_fields = ', "customfield_12904": ["' + issue.customer + '"], \
+                         "customfield_12906": "' + issue.process + '", \
+                         "customfield_13008": "' + issue.platform + '"'
         issuetype = SUBTASK
     # issue is a story
     else:
@@ -51,7 +50,10 @@ def create_issue(issue, post=False, session=None):
 def jira_create_issues(session, issues):
     jIssues = ""
     for issue in issues:
-        jIssues += json.dumps(create_issue(issue, session=session))
+        # print("test1")
+        # json.dumps(jira_create_issue(issue))
+        temp = json.dumps(jira_create_issue(issue))
+        jIssues = jIssues + temp
         if issue is not issues[-1]:
             jIssues += ','
         # jIssues = temp_issue + ','

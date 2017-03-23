@@ -8,11 +8,12 @@ from JiraApi import move_issues_to_sprint
 |               create issues/stories update Status                         |
 =========================================================================="""
 
+filename = "proactiv-requirements.xlsx"
 # filename = "jira-import-template.xlsx"
-# s = utilities.login()
-# wb = utilities.readFile(filename)
-# issues = utilities.parseFile(wb, session=s, filename=filename)
-# utilities.create_issues(s, issues, filename)
+s = utilities.login()
+wb = utilities.readFile(filename)
+issues = utilities.parseFile(wb, session=s, filename=filename)
+utilities.create_issues(s, issues, filename)
 
 # utilities.move_to_sprint(s, "TEST board", "TEST Sprint 15", "TEST-1112")
 # move_issues_to_sprint("15", "TEST-1088", s)
@@ -54,5 +55,5 @@ from JiraApi import move_issues_to_sprint
 |               Retrieve Task                                               |
 =========================================================================="""
 
-s = utilities.login()
-utilities.retrieve("TEST-1217", s)
+# s = utilities.login()
+# utilities.retrieve("TEST-1217", s)

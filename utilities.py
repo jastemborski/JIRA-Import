@@ -1,6 +1,6 @@
 from Issue import Issue
 import openpyxl
-from JiraApi import jira_create_issues, create_issue, get_issue, search_issues
+from JiraApi import jira_create_issues, jira_create_issue, get_issue, search_issues
 from JiraApi import move_issues_to_sprint, get_all_boards, get_all_sprints
 import requests
 import constants
@@ -12,10 +12,14 @@ from Story import Story
 from openpyxl.worksheet.hyperlink import Hyperlink
 from openpyxl.styles import Font, PatternFill, colors, Color
 
+# Test
+# PROJECT_KEY = "TEST"
+# ISSUE_TYPE = "10102" 
 
-PROJECT_KEY = "TEST"
-ISSUE_TYPE = "10102"
-# PROJECT_KEY = "DELIVERCOM"
+# Production
+ISSUE_TYPE = "5"
+PROJECT_KEY = "DELIVERCOM"
+
 info_row = 2
 PROCESS_DICT = {'Complaint': 'B', 'Inquiry': 'C', 'CAPA': 'D',
                 'Quality Event': 'E', 'Quality Event Investigation': 'E',
@@ -276,14 +280,15 @@ def create_stories(story_dict, session=None, wb=None, filename=None):
                 # print(story.assignee)
                 _issue.assignee = story.assignee
                 if story.summary and story.description:
-                    issue = create_issue(_issue, True, session)
+                    issue = jira_create_issue(_issue, True, session)
                     story_json = json.loads(issue.text)
                     story_key = story_json['key']
                     # print(story_key)
                     # print(story.board)
                     # print(story.sprint)
-                    print(move_to_sprint(session, story.board,
-                                         story.sprint, story_key))
+                    # if story.board is not None:
+                    #     print(move_to_sprint(session, story.board,
+                    #                          story.sprint, story_key))
                     # print(issue)
                     # print(issue.text)
                     info = json.loads(issue.text)
@@ -501,7 +506,8 @@ def create_issues(session, issues, filename):
                 non_created_issues.append(issue)
         if non_created_issues:
             json_issue_response = jira_create_issues(session,
-                                                     non_created_issues)
+                                                     issues)
+            print(json_issue_response)
             i = 0
             for pending_issue in non_created_issues:
                 issue_reponse = json.loads(json_issue_response.text)
@@ -523,6 +529,16 @@ def is_issue_created(issue, s):
 
 
 def is_duplicate(issue, session, filename):
+    """
+        TODO: For some reason JQL doesn't like apostrophes... investigate
+        Also need to investigate this method in production
+        {'errorMessages': ['Unrecognized field "fieldsByKeys"
+        (Class com.atlassian.jira.rest.v2.search.SearchRequestBean),
+        not marked as ignorable\n at
+        [Source: org.apache.catalina.connector.CoyoteInputStream@713e4dd2;
+        line: 1, column: 221] (through reference chain:
+        com.atlassian.jira.rest.v2.search.SearchRequestBean["fieldsByKeys"])']}
+    """
     try:
         search_query = form_query(issue)
         field_list = []
@@ -531,7 +547,7 @@ def is_duplicate(issue, session, filename):
                                           field_list=field_list,
                                           session=session).text)
         if search['total'] and not issue.jira_key:
-            # print(json.dumps(search, indent=3))
+            print(json.dumps(search, indent=3))
             wb = openpyxl.load_workbook(filename)
             req_sheet = wb.get_sheet_by_name('Requirements')
             req_sheet['E' + str(issue.row)] = "Issue: " + \
@@ -544,6 +560,8 @@ def is_duplicate(issue, session, filename):
             return False
     except Exception:
         print("Error in issue created")
+        print(issue)
+        print(search)
 
 
 def highlight_row(row, hex_color, sheet):
