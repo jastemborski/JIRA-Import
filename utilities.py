@@ -1,17 +1,12 @@
-from Issue import Issue
 import openpyxl
-from JiraApi import jira_create_issues, jira_create_issue, get_issue, search_issues
-from JiraApi import move_issues_to_sprint, get_all_boards, get_all_sprints
 import requests
 import constants
 import json
 import getpass
-from ProjectMeta import ProjectMeta
-from IssueTypeMeta import IssueTypeMeta
-from Story import Story
 from openpyxl.worksheet.hyperlink import Hyperlink
-from openpyxl.styles import Font, PatternFill, colors, Color
-
+from openpyxl.styles import PatternFill
+from ADT import ProjectMeta, IssueTypeMeta, Story, Issue
+from JiraApi import *
 
 info_row = 2
 PROCESS_DICT = {'Complaint': 'B', 'Inquiry': 'C', 'CAPA': 'D',
@@ -593,6 +588,13 @@ def retrieve(key, session):
 
 
 def extract_comments(comments):
+    """ Utility method for parsing JIRA comments represented as JSON
+        Args:
+            comments: A variable containing JIRA comments in JSON
+                      representation.
+        Returns:
+            A string containing all of the JIRA comments tied to an issue
+    """
     size = len(comments)
     addtional_notes = ""
     for n in range(0, size):
