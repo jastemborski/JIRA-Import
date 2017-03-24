@@ -2,8 +2,8 @@ from Issue import Issue
 import constants
 import json
 
-SUBTASK = "5"  # Prod
-STORY = "10001"  # Prod
+# SUBTASK = "5"  # Prod
+# STORY = "10001"  # Prod
 
 # SUBTASK = "10102"  # Test
 # STORY = "10100"  # Test
@@ -11,6 +11,31 @@ STORY = "10001"  # Prod
 
 def jira_create_issue(issue, post=False, session=None):
     # issue is a subtask
+    """ Wrapper class for Create issue in JIRA Cloud Rest API
+
+    Creates an issue or a sub-task from a JSON representation.
+    The fields that can be set on create, in either the fields parameter
+    or the update parameter can be determined using the
+    /rest/api/2/issue/createmetaresource.If a field is not configured
+    to appear on the create screen, then it will not be in the createmeta,
+    and a field validation error will occur if it is submitted.
+
+    Creating a sub-task is similar to creating a regular issue, with two
+    important differences: the issueType field must correspond to a sub-task
+    issue type (you can use /issue/createmeta to discover sub-task issue types)
+    and you must provide a parent field in the issue create request
+    containing the id or key of the parent issue.
+
+    Args:
+        issue: A variable holding an Issue Object
+        post: An optional Variable which is defaulted to false - indicating
+              the method should return a JSON representation of the issue
+              instead of actually posting the issue.
+        session: An optional variable used to store session information.
+                 Is needed if post is True.
+    Returns:
+            A string value of the Change Type
+    """
     optional_fields = ', "assignee": { "name":"' + issue.assignee + '"} ' \
                       if issue.assignee else ""
     if len(issue.parent) is not 0:
@@ -27,13 +52,13 @@ def jira_create_issue(issue, post=False, session=None):
         custom_fields = ', "customfield_12904": ["' + issue.customer + '"], \
                          "customfield_12906": "' + issue.process + '", \
                          "customfield_13008": "' + issue.platform + '"'
-        issuetype = SUBTASK
+        issuetype = constants.SUBTASK
     # issue is a story
     else:
         parent = issue.parent
         summary = issue.customer + ': ' + issue.process
         custom_fields = ""
-        issuetype = STORY
+        issuetype = constants.STORY
     jIssue = '{"update":{}, "fields":{"project":{"key": "' \
              + issue.project_key + '"},' + parent + '"summary": "' + summary + '", \
              "description": "' + issue.change_description + ' \

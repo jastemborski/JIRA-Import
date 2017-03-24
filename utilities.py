@@ -12,13 +12,6 @@ from Story import Story
 from openpyxl.worksheet.hyperlink import Hyperlink
 from openpyxl.styles import Font, PatternFill, colors, Color
 
-# Test
-# PROJECT_KEY = "TEST"
-# ISSUE_TYPE = "10102" 
-
-# Production
-ISSUE_TYPE = "5"
-PROJECT_KEY = "DELIVERCOM"
 
 info_row = 2
 PROCESS_DICT = {'Complaint': 'B', 'Inquiry': 'C', 'CAPA': 'D',
@@ -272,7 +265,7 @@ def create_stories(story_dict, session=None, wb=None, filename=None):
             if not story.key:
                 _issue = Issue()
                 _issue.customer = story.customer
-                _issue.project_key = PROJECT_KEY
+                _issue.project_key = constants.PROJECT_KEY
                 _issue.process = story.summary
                 _issue.change_description = story.description
                 _issue.board = story.board
@@ -371,8 +364,8 @@ def parseFile(wb, session=None, filename=None):
             issue.notes = get_notes(req_sheet, row)
             issue.parent = get_parent(jira_sheet, issue.process)
             issue.customer = customer
-            issue.issue_type = ISSUE_TYPE
-            issue.project_key = PROJECT_KEY
+            issue.issue_type = constants.SUBTASK
+            issue.project_key = constants.PROJECT_KEY
             issue.jira_key = get_jira_task(req_sheet, row)
             issue.row = str(row)
             issue.assignee = get_subtask_assignee(req_sheet, row)
